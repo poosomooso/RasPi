@@ -3,8 +3,8 @@ import queue
 import PhysicalLayer
 import MorseCode
 
-ID = 'A'
-PROTOCOL = 'A'
+ID = 'B'
+PROTOCOL = 'B'
 
 def transmit():
 	recipient = input('ADDRESS OF RECIPIENT: ')
@@ -34,7 +34,9 @@ def transmit():
 
 	for i in range(len(splitMessages)):
 		messagesLeft = str(len(splitMessages)-i)
+
 		messageLength = str(int(splitMessages[i][1]/.25)) #not useful right now
+
 		msg = splitMessages[i][0]
 
 		packet = recipient+' '+ID+' '+PROTOCOL+' '+messagesLeft+' '+messageLength+' '+msg
@@ -74,6 +76,7 @@ def readMessage(q):
 				# 	pass #iterate through the next messages and concat string
 			else:
 				print(messageProgress.get(src, '')+data['message'])
+
 
 
 
