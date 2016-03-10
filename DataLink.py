@@ -24,7 +24,7 @@ def transmit():
 				if d=='.':
 					currentLen+=.5
 				else:
-					d+=1
+					currentLen+=1
 			currentLen+=.5
 		if currentLen>71: #longest letter is 4 seconds long
 			splitMessages.append((currentStr,currentLen))
@@ -34,10 +34,11 @@ def transmit():
 
 	for i in range(len(splitMessages)):
 		messagesLeft = str(len(splitMessages)-i)
-		messageLength = str(splitMessages[i][1])
+		messageLength = str(int(splitMessages[i][1]/.25)) #not useful right now
 		msg = splitMessages[i][0]
 
 		packet = recipient+' '+ID+' '+PROTOCOL+' '+messagesLeft+' '+messageLength+' '+msg
+		print(packet)
 
 		PhysicalLayer.physicalTransmit(packet)
 
@@ -56,7 +57,7 @@ def readMessage(q):
 		spacesbtwn = 5
 		headerlen = len(recip+src+prot+remainingMsgs+dataLen)+spacesbtwn
 
-		message = m[headerlen:headerlen+int(dataLen)]
+		message = m[headerlen:]
 
 		return {'recipient': recip, 'source':src, 'protocol':prot, 'remainingMsgs':int(remainingMsgs), 'length':int(dataLen), 'message':message}
 
@@ -72,15 +73,15 @@ def readMessage(q):
 				# for i in range(data['remainingMsgs'], 0, -1):
 				# 	pass #iterate through the next messages and concat string
 			else:
-				print messageProgress.get(src, '')+data['message']
+				print(messageProgress.get(src, '')+data['message'])
 
 
 
 if __name__ == "__main__":
 	tx=threading.Thread(target=transmit,name="TRANSMIT")
 	tx.start()
-	# q = queue.Queue
-	# PhysicalLayer.reciever(q)
+	q = queue.Queue
+	PhysicalLayer.reciever(q)
 
 	#how to pull from physical layer's strings?
 	tx.join()

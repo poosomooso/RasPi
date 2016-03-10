@@ -65,7 +65,7 @@ def parse_blinks(datalinkq):
                     message+=d[letters[l]]
                 except KeyError:
                     pass
-        datalinkq.put(message)
+        datalinkq.put(item=message)
         print(message)
         dits=Q.get()
     print('END MESSAGES')
@@ -77,7 +77,6 @@ def physicalTransmit(msg):
 
 def reciever(datalinkq):
     with SetPin(16,"GPIO_23",direction="RX") as RXpin:
-        datalinkq = queue.Queue()
         r = threading.Thread(target=receiveblinks,name='RECIEVE',args=(RXpin,))
         p = threading.Thread(target=parse_blinks,name='PARSE',args=(datalinkq,))
         r.start()
