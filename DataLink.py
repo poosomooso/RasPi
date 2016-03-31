@@ -75,7 +75,13 @@ def readMessage(q):
 				# for i in range(data['remainingMsgs'], 0, -1):
 				# 	pass #iterate through the next messages and concat string
 			else:
-				print(messageProgress.get(src, '')+data['message'])
+				firstPart =  messageProgress.get(src, '')
+				try: 
+					del messageProgress[src]
+				except KeyError as e: 
+					print(e)
+				print(firstPart+data['message'])
+
 
 
 
@@ -83,11 +89,13 @@ def readMessage(q):
 if __name__ == "__main__":
 	tx=threading.Thread(target=transmit,name="TRANSMIT")
 	tx.start()
-	q = queue.Queue
+	q = queue.Queue()
+	rx=threading.Thread(target=readMessage, name="DATALINKRECIEVER",args=(q,))
+	rx.start()
 	PhysicalLayer.reciever(q)
-
 	#how to pull from physical layer's strings?
 	tx.join()
+	rx.join()
 
 		
 
