@@ -27,7 +27,7 @@ class SetPin:
             
         else:
             self.direction == "RX"
-            GPIO.setup(self.headerpin,GPIO.IN) # allow pin to set 3.3v and 0v levels
+            GPIO.setup(self.headerpin,GPIO.IN, pull_up_down=GPIO.PUD_DOWN) # allow pin to set 3.3v and 0v levels
         
 
     def __enter__(self):
