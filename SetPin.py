@@ -34,7 +34,7 @@ class SetPin:
         print("Safe GPIO prepared")
         return self
     def __exit__(self,*rabc):
-        GPIO.cleanup()
+        GPIO.cleanup(self.headerpin)
         print("Safe GPIO exit succeeded")
         return not any(rabc)
 
