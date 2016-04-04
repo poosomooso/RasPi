@@ -11,30 +11,39 @@ from options import *
 
 #thread to read in, generates series of dits
 #thread to translate
-Q = queue.Queue()
-def receiveblinks(RXpin,blinks=200,duration=float(DIT_TIME)/DIT_SAMPLES):
+
+def detect_blinks(RXpin,duration=float(DIT_TIME)/DIT_SAMPLES):
     while True:
-        dits=''
-        num_spaces = 0
-        for i in range(blinks):
-            
-            num_high = 0
-            for j in range(DIT_SAMPLES):
-                start_time = time.time()
-                if RXpin.read_pin():
-                    num_high += 1
-                time.sleep(duration - (time.time() - start_time))
-            reading = round(float(num_high)/DIT_SAMPLES)
-            if reading == 0:
-                num_spaces+=1
-            else:
-                num_spaces=0
-            if num_spaces>=15 and not dits.isspace():
-            	#end of message
-                Q.put(dits)
-                dits = ''
-            	#send message string to somewhere
-            dits+=("." if  reading==1 else " ")
+        if RXpin.read_pin():
+            receive_blinks(RXpin, duration)
+            time.sleep(duration)
+
+Q = queue.Queue()
+def receive_blinks(RXpin,duration=float(DIT_TIME)/DIT_SAMPLES):
+    dits=''
+    num_spaces = 0
+
+    drift = 1
+
+    while True:
+        num_high = 0 + drift
+        for j in range(DIT_SAMPLES - drift):
+            if RXpin.read_pin():
+                num_high += 1
+            time.sleep(duration)
+        reading = round(float(num_high)/DIT_SAMPLES)
+        if reading == 0:
+            num_spaces += 1
+        else:
+            num_spaces = 0
+        if num_spaces >= 15 and not dits.isspace():
+        	#end of message
+            Q.put(dits)
+            dits = ''
+        	#send message string to somewhere
+            break
+        dits += ("." if  reading == 1 else " ")
+        drift = 0
     Q.put('END')
     
 def parse_blinks(datalinkq):
@@ -82,7 +91,7 @@ def physicalTransmit(msg):
 
 def reciever(datalinkq):
     with SetPin(16,"GPIO_23",direction="RX") as RXpin:
-        r = threading.Thread(target=receiveblinks,name='RECIEVE',args=(RXpin,))
+        r = threading.Thread(target=detect_blinks,name='RECIEVE',args=(RXpin,))
         p = threading.Thread(target=parse_blinks,name='PARSE',args=(datalinkq,))
         r.start()
         p.start()

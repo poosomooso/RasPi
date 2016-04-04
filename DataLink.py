@@ -53,6 +53,7 @@ def readMessage(q):
 	def extractHeader(m):
 		""" m is the message """
 		splitmsg = m.split()
+		print(splitmsg)
 		recip = splitmsg[0]
 		src = splitmsg[1]
 		prot = splitmsg[2]
