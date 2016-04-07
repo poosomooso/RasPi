@@ -24,9 +24,7 @@ def detect_blinks(RXpin,duration=float(DIT_TIME)/DIT_SAMPLES):
 def receive_blinks(RXpin,duration=float(DIT_TIME)/DIT_SAMPLES):
     dits=''
     num_spaces = 0
-    #raw = ''
-    index = 0
-    while_time = 0
+    # raw = ''
 
     while True:
         num_high = 0
@@ -34,14 +32,13 @@ def receive_blinks(RXpin,duration=float(DIT_TIME)/DIT_SAMPLES):
             t = time.time()
             if RXpin.read_pin():
                 num_high += 1
-                #raw += '.'
-            #else:
-                #raw += ' '
-            if j == 0:
-                t+=while_time
+            #     raw += '.'
+            # else:
+            #     raw += ' '
+            # if j == 0:
+            #     t+=while_time
             time.sleep(duration - (time.time() - t))
-        t_0 = time.time()
-        #raw += '|\n'
+        # raw += '|\n'
         reading = round(float(num_high)/DIT_SAMPLES)
 
         if reading == 0:
@@ -55,9 +52,11 @@ def receive_blinks(RXpin,duration=float(DIT_TIME)/DIT_SAMPLES):
             yield 'END'
         	#send message string to somewhere
             break
-        yield ("." if  reading == 1 else " ")
-        while_time = time.time()-t_0
-    #print(raw)
+        if reading == 1:
+            yield "."
+        else:
+            yield " "
+    # print(raw)
     
 def parse_blinks(datalinkq):
     while True:
@@ -104,6 +103,7 @@ def parse_blinks(datalinkq):
         print('END MESSAGE')
 
 def physicalTransmit(msg):
+    print(msg)
     with BlinkTX(15,"GPIO_22",direction="TX") as blink:
         blink.blinkTX(0, DIT_TIME)
         blink(MorseTX(msg.upper()))

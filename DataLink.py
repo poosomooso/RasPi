@@ -44,9 +44,14 @@ def transmit():
 			msg = splitMessages[i][0]
 
 			packet = recipient+' '+ID+' '+PROTOCOL+' '+messagesLeft+' '+messageLength+' '+msg
-			#print(packet)
-
+			checksum = 0
+			for c in packet:
+				checksum+=ord(c)
+			checksum %= 67
+			checksumPacket = recipient+' '+ID+' '+checksum
+			
 			PhysicalLayer.physicalTransmit(packet)
+			PhysicalLayer.physicalTransmit(checksumPacket)
 
 def readMessage(q):
 	""" q is the queue to push messages to """
