@@ -44,7 +44,7 @@ def transmit():
 			msg = splitMessages[i][0]
 
 			packet = recipient+' '+ID+' '+PROTOCOL+' '+messagesLeft+' '+messageLength+' '+msg
-			print(packet)
+			#print(packet)
 
 			PhysicalLayer.physicalTransmit(packet)
 

@@ -1,2 +1,2 @@
-DIT_TIME = .2 # seconds
-DIT_SAMPLES = 13
+DIT_TIME = .02 # seconds
+DIT_SAMPLES = 9

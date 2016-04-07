@@ -10,12 +10,15 @@ class BlinkTX(SetPin):
             raise ValueError("direction must be 'TX'")
         super().__init__(headerpin,BCM,direction="TX")
     def __call__(self,tups):
-        for state,direction in tups:
-            self.blinkTX(state,direction)
+        for state,duration in tups:
+            #t = time.time()
+            self.blinkTX(state, duration)
+            #print(time.time() - t)
     def blinkTX(self,state,duration):
-        print(state,duration)
+        #print(state,duration)
+        t = time.time()
         self.turn_high() if state else self.turn_low()
-        time.sleep(duration)
+        time.sleep(duration - (time.time() - t))
 
 if __name__ == "__main__":
 

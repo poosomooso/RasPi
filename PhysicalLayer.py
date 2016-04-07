@@ -11,77 +11,96 @@ from options import *
 
 #thread to read in, generates series of dits
 #thread to translate
-
+Q = queue.Queue()
 def detect_blinks(RXpin,duration=float(DIT_TIME)/DIT_SAMPLES):
     while True:
         if RXpin.read_pin():
-            receive_blinks(RXpin, duration)
+            for dit in receive_blinks(RXpin, duration):
+                Q.put(dit)
+        else:
             time.sleep(duration)
 
-Q = queue.Queue()
+
 def receive_blinks(RXpin,duration=float(DIT_TIME)/DIT_SAMPLES):
     dits=''
     num_spaces = 0
-
-    drift = 1
+    #raw = ''
+    index = 0
+    while_time = 0
 
     while True:
-        num_high = 0 + drift
-        for j in range(DIT_SAMPLES - drift):
+        num_high = 0
+        for j in range(DIT_SAMPLES):
+            t = time.time()
             if RXpin.read_pin():
                 num_high += 1
-            time.sleep(duration)
+                #raw += '.'
+            #else:
+                #raw += ' '
+            if j == 0:
+                t+=while_time
+            time.sleep(duration - (time.time() - t))
+        t_0 = time.time()
+        #raw += '|\n'
         reading = round(float(num_high)/DIT_SAMPLES)
+
         if reading == 0:
             num_spaces += 1
         else:
             num_spaces = 0
-        if num_spaces >= 15 and not dits.isspace():
+        if num_spaces >= 15:# and not dits.isspace():
         	#end of message
-            Q.put(dits)
-            dits = ''
+            # Q.put(dits)
+            # dits = ''
+            yield 'END'
         	#send message string to somewhere
             break
-        dits += ("." if  reading == 1 else " ")
-        drift = 0
-    Q.put('END')
+        yield ("." if  reading == 1 else " ")
+        while_time = time.time()-t_0
+    #print(raw)
     
 def parse_blinks(datalinkq):
     while True:
-        dits=Q.get()
+        dit=Q.get()
+        dits = ''
+
+        #build dit string
+        while dit!='END':
+            dits+=dit
+            dit = Q.get()
+        #interpret string
         print(dits)
-        while dits!='END':
-            morse_mess = ''
-            morse_chars = dits.split(' ')
+        morse_mess = ''
+        morse_chars = dits.split(' ')
 
-            for c in morse_chars:
-                if c=='':
-                    morse_mess+=' '
-                elif c=='.':
-                    morse_mess+='.'
-                elif c=='...':
-                    morse_mess+='-'
+        for c in morse_chars:
+            if c=='':
+                morse_mess+=' '
+            elif c=='.':
+                morse_mess+='.'
+            elif c=='...':
+                morse_mess+='-'
 
-            message = ''
-            d = MorseCode.ReverseCode
-            letters = morse_mess.split(' ')
-            spaced = False
+        message = ''
+        d = MorseCode.ReverseCode
+        letters = morse_mess.split(' ')
+        spaced = False
 
-            for l in range(len(letters)):
-                if spaced:
-                    if letters[l]!='':
-                        message+=' '
-                        spaced=False
-                if letters[l]=='' and l+1<len(letters) and letters[l+1]=='':
-                    spaced = True
-                else:
-                    try:
-                        message+=d[letters[l]]
-                    except KeyError:
-                        pass
-            datalinkq.put(item=message)
-            print(message)
-            dits=Q.get()
+        for l in range(len(letters)):
+            if spaced:
+                if letters[l]!='':
+                    message+=' '
+                    spaced=False
+            if letters[l]=='' and l+1<len(letters) and letters[l+1]=='':
+                spaced = True
+            else:
+                try:
+                    message+=d[letters[l]]
+                except KeyError:
+                    pass
+        datalinkq.put(item=message)
+        print(message)
+        dits=Q.get()
         print('END MESSAGE')
 
 def physicalTransmit(msg):
