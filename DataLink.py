@@ -2,22 +2,36 @@ import threading
 import queue
 import PhysicalLayer
 import MorseCode
+import time
 
 ID = 'B'
 PROTOCOL = 'B'
+parityQ = queue.Queue()
 
 def transmit(q):
 	while True:
-		msg = ' '+q.get()
+		msgDict = q.get()
+		msg = ' '+msgDict['message']
 
-		packet = recipient+' '+ID+' '
+		packet = msgDict['recipient']+' '+ID+' '
 		
 		parity = getHash(packet+msg)
 		
 		PhysicalLayer.physicalTransmit(packet+parity+msg)
+		
+		start = time.time()
+		while True:
+			ok = parityQ.get()
+			if ok['recipient'] == msgDict['recipient'] and ok['source'] == ID:
+				#recieved ok message
+				break
+			if time.time() - start >= 15: #waiting for 15 seconds
+				PhysicalLayer.physicalTransmit(packet+parity+msg)
+				start = time.time()
 
 
-def readMessage(q):
+
+def readMessage(q, networkq):
 	""" q is the queue to push messages to """
 	def extractHeader(m):
 		msgSplit = m.split()
@@ -25,27 +39,36 @@ def readMessage(q):
 
         recip = msgSplit[0]
         src = msgSplit[1]
-        parity = msgSplit[2]
-        msg = ' '.join(msgSplit[3:])
+
+        if len(msgSplit)==2:
+        	parityQ.put({'recipient':recip,
+        		'source':src})
+        else:
+	        parity = msgSplit[2]
+	        msg = ' '.join(msgSplit[3:])
+
+	        return {
+	            'recipient': recip, 
+	            'source':src, 
+	            'parity':parity, 
+	            'message':msg }
 
 	messageProgress = {}
 	while True:
 		msg = q.get()
 		data = extractHeader(msg)
-		src = data['source']
-		if data['recipient'] == ID:
-			if data['remainingMsgs'] > 1:
-				message = data['message']
-				messageProgress[src] = messageProgress.get(src, '')+message
-				# for i in range(data['remainingMsgs'], 0, -1):
-				# 	pass #iterate through the next messages and concat string
-			else:
-				firstPart =  messageProgress.get(src, '')
-				try: 
-					del messageProgress[src]
-				except KeyError as e: 
-					print(e)
-				print(firstPart+data['message'])
+		if len(data) == 2:
+			parityQ.put(data)
+		else:
+			src = data['source']
+			if data['recipient'] == ID:
+				parityMsg = ' 'join(data['recipient'], src, '', data['message'])
+				if data['parity'] == getHash(parityMsg):
+					PhysicalLayer.physicalTransmit('{} {}'.format(data['recipient'], src))
+				else:
+					break;
+				networkq.put(data['message'])
+			
 
 def getHash(msg):
     s = 0

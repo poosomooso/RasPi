@@ -6,6 +6,8 @@ from options import *
 GLOBAL_IP = DataLink.ID
 prot = "B"
 
+global2local = {'B':'B', 'A':'A'}
+
 def recieve(q, dlq):
     """Recieves from datalink, reads header sees if it needs to go anywhere else"""
     def extractHeader(m):
@@ -79,7 +81,8 @@ def send(q, dlq):
 
             packet = "{} {} {} {} {}".format(msgDict["recipient"], GLOBAL_IP, messagesLeft, len(splitMessages), msg)
             
-            dlq.put(packet)
+            dlq.put({'recip':global2local[msgDict['recipient']],
+                'message':packet})
 
 def applicationishLayerTX(q):
     """Simulates application layer input"""
