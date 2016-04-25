@@ -45,8 +45,10 @@ def readMessage(q, networkq):
         src = msgSplit[1]
 
         if len(msgSplit)==2:
-        	parityQ.put({'recipient':recip,
-        		'source':src})
+        	return {
+        		'recipient':recip,
+        		'source':src s}
+
         else:
 	        parity = msgSplit[2]
 	        msg = ' '.join(msgSplit[3:])
