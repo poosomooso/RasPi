@@ -6,77 +6,27 @@ import MorseCode
 ID = 'B'
 PROTOCOL = 'B'
 
-def transmit():
+def transmit(q):
 	while True:
+		msg = ' '+q.get()
 
-		recipient = input('ADDRESS OF RECIPIENT: ')
-		message = input('MESSAGE TO SEND: ')
-		#how to know the morse code length
-		splitMessages = []
-		currentLen = 0
-		currentStr = ''
-		#calculating length of message
-		for c in message.upper():
-			currentStr+=c
-			if c == ' ':
-				currentLen += 1
-			else:
-				morse = MorseCode.MorseCode[c]
-				for d in morse:
-					if d=='.':
-						currentLen+=.5
-					else:
-						currentLen+=1
-				currentLen+=.5
-			if currentLen>71: #longest letter is 4 seconds long
-				splitMessages.append((currentStr,currentLen))
-				currentLen = 0
-				currentStr = ''
-		if currentStr != '':
-			splitMessages.append((currentStr,currentLen))
+		packet = recipient+' '+ID+' '
+		
+		parity = getHash(packet+msg)
+		
+		PhysicalLayer.physicalTransmit(packet+parity+msg)
 
-
-		for i in range(len(splitMessages)):
-			messagesLeft = str(len(splitMessages)-i)
-
-			messageLength = str(int(splitMessages[i][1]/.25)) #not useful right now
-
-			msg = splitMessages[i][0]
-
-			packet = recipient+' '+ID+' '+PROTOCOL+' '+messagesLeft+' '+messageLength+' '+msg
-			checksum = 0
-			for c in packet:
-				checksum+=ord(c)
-			checksum %= 67
-			checksumPacket = recipient+' '+ID+' '+checksum
-			
-			PhysicalLayer.physicalTransmit(packet)
-			PhysicalLayer.physicalTransmit(checksumPacket)
 
 def readMessage(q):
 	""" q is the queue to push messages to """
 	def extractHeader(m):
-		""" m is the message """
-		splitmsg = m.split()
-		print(splitmsg)
-		recip = splitmsg[0]
-		src = splitmsg[1]
-		prot = splitmsg[2]
-		remainingMsgs = splitmsg[3]
-		dataLen = splitmsg[4]
+		msgSplit = m.split()
+        print(msgSplit)
 
-		spacesbtwn = 5
-		headerlen = len(recip+src+prot+remainingMsgs+dataLen)+spacesbtwn
-
-		message = m[headerlen:]
-
-		return {
-			'recipient': recip, 
-			'source':src, 
-			'protocol':prot, 
-			'remainingMsgs':int(remainingMsgs), 
-			'length':int(dataLen), 
-			'message':message}
+        recip = msgSplit[0]
+        src = msgSplit[1]
+        parity = msgSplit[2]
+        msg = ' '.join(msgSplit[3:])
 
 	messageProgress = {}
 	while True:
@@ -97,9 +47,11 @@ def readMessage(q):
 					print(e)
 				print(firstPart+data['message'])
 
-
-
-
+def getHash(msg):
+    s = 0
+    for c in msg:
+        s += ord(c.upper())
+    return chr(65 + s % 26)
 
 if __name__ == "__main__":
 	tx=threading.Thread(target=transmit,name="TRANSMIT")

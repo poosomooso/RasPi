@@ -10,7 +10,7 @@ def MorseTX(M):
                 yield (0, DIT_TIME) #end of dot or dash
             yield(0, DIT_TIME * 2) #end of letter
         yield (0, DIT_TIME * 4) #end of word
-    yield (0, DIT_TIME * 8) #end of message
+    yield (1, DIT_TIME * 8) #end of message
 
 
 if __name__ == "__main__":

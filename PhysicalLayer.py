@@ -15,8 +15,8 @@ Q = queue.Queue()
 def detect_blinks(RXpin,duration=float(DIT_TIME)/DIT_SAMPLES):
     while True:
         if RXpin.read_pin():
-            for dit in receive_blinks(RXpin, duration):
-                Q.put(dit)
+            Q.put('.')
+            receive_blinks(RXpin, duration):
         else:
             time.sleep(duration)
 
@@ -41,21 +41,21 @@ def receive_blinks(RXpin,duration=float(DIT_TIME)/DIT_SAMPLES):
         # raw += '|\n'
         reading = round(float(num_high)/DIT_SAMPLES)
 
-        if reading == 0:
-            num_spaces += 1
+        if reading == 1:
+            num_dits += 1
         else:
-            num_spaces = 0
-        if num_spaces >= 15:# and not dits.isspace():
+            num_dits = 0
+        if num_dits >= 8:# and not dits.isspace():
         	#end of message
             # Q.put(dits)
             # dits = ''
-            yield 'END'
+            Q.put('END')
         	#send message string to somewhere
             break
         if reading == 1:
-            yield "."
+            Q.put(".")
         else:
-            yield " "
+            Q.put(" ")
     # print(raw)
     
 def parse_blinks(datalinkq):
@@ -70,7 +70,7 @@ def parse_blinks(datalinkq):
         #interpret string
         print(dits)
         morse_mess = ''
-        morse_chars = dits.split(' ')
+        morse_chars = dits.rstrip('.').split(' ')
 
         for c in morse_chars:
             if c=='':
