@@ -1,6 +1,6 @@
 import threading
 import queue
-import DataLink
+import DataLink, PhysicalLayer, MorseCode
 from options import *
 
 GLOBAL_IP = DataLink.ID
@@ -81,7 +81,7 @@ def send(q, dlq):
 
             packet = "{} {} {} {} {}".format(msgDict["recipient"], GLOBAL_IP, messagesLeft, len(splitMessages), msg)
             
-            dlq.put({'recip':global2local[msgDict['recipient']],
+            dlq.put({'recipient':global2local[msgDict['recipient']],
                 'message':packet})
 
 def applicationishLayerTX(q):
@@ -98,8 +98,8 @@ def applicationishLayerRX(q):
     """Simulates application layer input"""
     while True:
         msgDict = q.get()
-        print msgDict['source']
-        print msgDict['message']
+        print(msgDict['source'])
+        print(msgDict['message'])
 
 if __name__ == "__main__":
     #queues to move info
@@ -116,15 +116,15 @@ if __name__ == "__main__":
     rx.start()
 
     #app layer threads
-    appin = threading.Thread(target=applicationishLayerRX, name="APPIN",args=(rxq))
-    appout = threading.Thread(target=applicationishLayerTX, name="APPOUT",args=(txq))
+    appin = threading.Thread(target=applicationishLayerRX, name="APPIN",args=(rxq,))
+    appout = threading.Thread(target=applicationishLayerTX, name="APPOUT",args=(txq,))
     appin.start()
     appout.start()
 
     #data link threads
-    txDatalink=threading.Thread(target=transmit,name="TRANSMIT", args=(txdlq,))
+    txDatalink=threading.Thread(target=DataLink.transmit,name="TRANSMIT", args=(txdlq,))
     txDatalink.start()
-    rxDatalink=threading.Thread(target=readMessage, name="DATALINKRECIEVER",args=(physicalq,rxdlq))
+    rxDatalink=threading.Thread(target=DataLink.readMessage, name="DATALINKRECIEVER",args=(physicalq,rxdlq))
     rxDatalink.start()
     PhysicalLayer.reciever(physicalq)
     

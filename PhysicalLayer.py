@@ -16,14 +16,14 @@ def detect_blinks(RXpin,duration=float(DIT_TIME)/DIT_SAMPLES):
     while True:
         if RXpin.read_pin():
             Q.put('.')
-            receive_blinks(RXpin, duration):
+            receive_blinks(RXpin, duration)
         else:
             time.sleep(duration)
 
 
 def receive_blinks(RXpin,duration=float(DIT_TIME)/DIT_SAMPLES):
     dits=''
-    num_spaces = 0
+    num_dits = 0
     # raw = ''
 
     while True:

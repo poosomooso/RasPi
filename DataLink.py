@@ -26,7 +26,7 @@ def transmit(q):
 				if ok['recipient'] == msgDict['recipient'] and ok['source'] == ID:
 					#recieved ok message
 					break
-			except QueueEmpty:
+			except queue.Empty:
 				pass
 			
 			if time.time() - start >= 15: #waiting for 15 seconds
@@ -39,25 +39,25 @@ def readMessage(q, networkq):
 	""" q is the queue to push messages to """
 	def extractHeader(m):
 		msgSplit = m.split()
-        print(msgSplit)
+		print(msgSplit)
 
-        recip = msgSplit[0]
-        src = msgSplit[1]
+		recip = msgSplit[0]
+		src = msgSplit[1]
 
-        if len(msgSplit)==2:
-        	return {
-        		'recipient':recip,
-        		'source':src s}
+		if len(msgSplit)==2:
+			return {
+				'recipient':recip,
+				'source':src }
 
-        else:
-	        parity = msgSplit[2]
-	        msg = ' '.join(msgSplit[3:])
+		else:
+			parity = msgSplit[2]
+			msg = ' '.join(msgSplit[3:])
 
-	        return {
-	            'recipient': recip, 
-	            'source':src, 
-	            'parity':parity, 
-	            'message':msg }
+			return {
+				'recipient': recip, 
+				'source':src, 
+				'parity':parity, 
+				'message':msg }
 
 	messageProgress = {}
 	while True:
@@ -68,7 +68,7 @@ def readMessage(q, networkq):
 		else:
 			src = data['source']
 			if data['recipient'] == ID:
-				parityMsg = ' 'join(data['recipient'], src, '', data['message'])
+				parityMsg = ' '.join(data['recipient'], src, '', data['message'])
 				if data['parity'] == getHash(parityMsg):
 					PhysicalLayer.physicalTransmit('{} {}'.format(src, data['recipient']))
 				else:
@@ -77,10 +77,10 @@ def readMessage(q, networkq):
 			
 
 def getHash(msg):
-    s = 0
-    for c in msg:
-        s += ord(c.upper())
-    return chr(65 + s % 26)
+	s = 0
+	for c in msg:
+		s += ord(c.upper())
+	return chr(65 + s % 26)
 	
 
 		
