@@ -21,10 +21,14 @@ def transmit(q):
 		
 		start = time.time()
 		while True:
-			ok = parityQ.get()
-			if ok['recipient'] == msgDict['recipient'] and ok['source'] == ID:
-				#recieved ok message
-				break
+			try:
+				ok = parityQ.get_nowait()
+				if ok['recipient'] == msgDict['recipient'] and ok['source'] == ID:
+					#recieved ok message
+					break
+			except QueueEmpty:
+				pass
+			
 			if time.time() - start >= 15: #waiting for 15 seconds
 				PhysicalLayer.physicalTransmit(packet+parity+msg)
 				start = time.time()
@@ -64,7 +68,7 @@ def readMessage(q, networkq):
 			if data['recipient'] == ID:
 				parityMsg = ' 'join(data['recipient'], src, '', data['message'])
 				if data['parity'] == getHash(parityMsg):
-					PhysicalLayer.physicalTransmit('{} {}'.format(data['recipient'], src))
+					PhysicalLayer.physicalTransmit('{} {}'.format(src, data['recipient']))
 				else:
 					break;
 				networkq.put(data['message'])
@@ -75,17 +79,7 @@ def getHash(msg):
     for c in msg:
         s += ord(c.upper())
     return chr(65 + s % 26)
-
-if __name__ == "__main__":
-	tx=threading.Thread(target=transmit,name="TRANSMIT")
-	tx.start()
-	q = queue.Queue()
-	rx=threading.Thread(target=readMessage, name="DATALINKRECIEVER",args=(q,))
-	rx.start()
-	PhysicalLayer.reciever(q)
-	#how to pull from physical layer's strings?
-	tx.join()
-	rx.join()
+	
 
 		
 

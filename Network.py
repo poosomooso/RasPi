@@ -8,7 +8,7 @@ prot = "B"
 
 global2local = {'B':'B', 'A':'A'}
 
-def recieve(q, dlq):
+def receive(q, dlq):
     """Recieves from datalink, reads header sees if it needs to go anywhere else"""
     def extractHeader(m):
         """ m is the message """
@@ -35,15 +35,15 @@ def recieve(q, dlq):
         msgDict = extractHeader(msgFull)
         #what to do with this message
         if msgDict['recipient'] == GLOBAL_IP:
+            msgBuilder = messageQueue.get(msgDict['source'], [None]*(msgDict['total'])) #get an array of empty if there are no prev
+            msgBuilder[msgDict['position']-1] = msgDict['message'] #put the message in the right place
+            messageQueue[msgDict['source']] = msgBuilder # set into the dict
             if msgDict['position'] == msgDict['total']:
-                q.put("".join(messageQueue.get(msgDict['source'], []))+msgDict['message'])
-            else:
-                msgBuilder = messageQueue.get(msgDict['source'], [None]*(msgDict['total']))
-                msgBuilder[msgDict['position']-1] = msgDict['message']
-                messageQueue[msgDict['source']] = msgBuilder
+                #put together the whole message
+                q.put("".join(messageQueue.get(msgDict['source'], [])))
+                
         else:
             pass
-
 
 def send(q, dlq):
     """Makes header, sends to datalink to send aling with the local ip and stuff"""
@@ -102,14 +102,36 @@ def applicationishLayerRX(q):
         print msgDict['message']
 
 if __name__ == "__main__":
-    #2 queues for dicts of {payload, to, from}
-    #one for transmitting, one for receiving
+    #queues to move info
+    rxdlq = queue.Queue()
+    txdlq = queue.Queue()
     rxq = queue.Queue()
-    tx=threading.Thread(target=transmit,name="NETWORKRX",args=(txq,))
-    tx.start()
     txq = queue.Queue()
-    rx=threading.Thread(target=readMessage, name="NETWORKTX",args=(rxq,))
+    physicalq = queue.Queue()
+    
+    #network threads
+    tx=threading.Thread(target=send,name="NETWORKTX",args=(txq, txdlq))
+    tx.start()
+    rx=threading.Thread(target=receive, name="NETWORKRX",args=(rxq, rxdlq))
     rx.start()
-    #how to pull from physical layer's strings?
+
+    #app layer threads
+    appin = threading.Thread(target=applicationishLayerRX, name="APPIN",args=(rxq))
+    appout = threading.Thread(target=applicationishLayerTX, name="APPOUT",args=(txq))
+    appin.start()
+    appout.start()
+
+    #data link threads
+    txDatalink=threading.Thread(target=transmit,name="TRANSMIT", args=(txdlq,))
+    txDatalink.start()
+    rxDatalink=threading.Thread(target=readMessage, name="DATALINKRECIEVER",args=(physicalq,rxdlq))
+    rxDatalink.start()
+    PhysicalLayer.reciever(physicalq)
+    
+    #join threads
     tx.join()
     rx.join()
+    appin.join()
+    appout.join()
+    txDatalink.join()
+    rxDatalink.join()
