@@ -3,6 +3,7 @@ from MorseCode import MorseCode
 from options import *
 
 def MorseTX(M):
+    print('sending')
     for W in M.split(" "):
         for L in W:
             for Dd in MorseCode[L]:
