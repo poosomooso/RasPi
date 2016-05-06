@@ -6,7 +6,7 @@ from options import *
 
 GLOBAL_IP = DataLink.ID
 
-global2local = {'B':'B', 'A':'A'}
+global2local = {'B':'B', 'A':'A', 'I':'I'}
 pattern = "[A-Za-z0-9 ]*"
 
 def receive(q, dlq):

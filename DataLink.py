@@ -12,24 +12,9 @@ def transmit(recip, message):
 
         packet = recip+' '+ID+' '
         
-        parity = getHash(packet+msg)
+        parity = getHash(message)#getHash(packet+msg)
         
         PhysicalLayer.physicalTransmit(packet+parity+msg)
-        
-        # start = time.time()
-        # while True:
-        #     try:
-        #         ok = parityQ.get_nowait()
-        #         if ok['recipient'] == msgDict['recipient'] and ok['source'] == ID:
-        #             #recieved ok message
-        #             break
-        #     except queue.Empty:
-        #         pass
-            
-        #     if time.time() - start >= 30: #waiting for 30 seconds
-        #         PhysicalLayer.physicalTransmit(packet+parity+msg)
-        #         start = time.time()
-
 
 
 def readMessage(q, networkq):
@@ -41,13 +26,6 @@ def readMessage(q, networkq):
 
             recip = msgSplit[0]
             src = msgSplit[1]
-
-            # if len(msgSplit)==2:
-            #     return {
-            #         'recipient':recip,
-            #         'source':src }
-
-            # else:
             parity = msgSplit[2]
             msg = ' '.join(msgSplit[3:])
 
@@ -56,12 +34,16 @@ def readMessage(q, networkq):
             return None
     messageProgress = {}
     while True:
-        dit=q.get()
+        times = q.get()
+        dit = times[1]
+        ditTimes = times[0]
         dits = ''
 
         #build dit string
-        for d in dit:
-            dits+='.' if d == 1 else ' '
+        for d in ditTimes:
+            for i in range(round(d/DIT_TIME)):
+                dits+='.' if dit == 1 else ' '
+            dit ^= 1
         #interpret string
         
         morse_mess = ''
@@ -100,17 +82,14 @@ def readMessage(q, networkq):
         data = extractHeader(message)
         if data == None:
             return
-        # if len(data) == 2:
-        #     parityQ.put(data)
+
         else:
             src = data[source]
             if data[recipient] == ID:
-                #parityMsg = ' '.join([data['recipient'], src, '', data['message']])
-                # if data['parity'] == getHash(parityMsg):
-                    # PhysicalLayer.physicalTransmit('{} {}'.format(src, data['recipient']))
-                # else:
-                #     break;
-                networkq.put(data[dlmessage])
+                if data[parity] != getHash(data[dlmessage]):
+                    print('ERROR: DID NOT SEND CORRECTLY')
+                else:
+                    networkq.put(data[dlmessage])
             
 
 def getHash(msg):

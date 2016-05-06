@@ -1,5 +1,5 @@
-DIT_TIME = .01 # seconds
-DIT_SAMPLES = 1
+DIT_TIME = .002 # seconds
+DIT_SAMPLES = 5
 
 recipient = 0
 source = 1
