@@ -22,7 +22,7 @@ def readMessage(q, networkq):
     def extractHeader(m):
         try:
             msgSplit = m.split()
-            print(msgSplit)
+            #print(msgSplit)
 
             recip = msgSplit[0]
             src = msgSplit[1]
@@ -48,7 +48,7 @@ def readMessage(q, networkq):
         
         morse_mess = ''
         morse_chars = dits.rstrip('.').lstrip(' ')
-        print(morse_chars)
+        #print(morse_chars)
         morse_chars = morse_chars.split(' ')
         for c in morse_chars:
             if c=='':
